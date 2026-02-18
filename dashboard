@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEM — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --brown: #734C1F;
+  --brown-h: #8A5C2A;
+  --gold: #DDB11F;
+  --cream: #F1EADE;
+  --cream-d: #E3D6C3;
+  --sb-bg: #1A120A;
+  --sb-hover: rgba(221,177,31,0.12);
+  --sb-active: rgba(221,177,31,0.18);
+  --success: #3D7A54;
+  --warning: #C07A1A;
+  --danger: #963028;
+  --info: #1F5C8A;
+  --muted: #8A7360;
+  --radius: 14px;
+  --shadow: 0 2px 16px rgba(115,76,31,0.09);
+  --shadow-md: 0 6px 28px rgba(115,76,31,0.14);
+  --sidebar-w: 272px;
+  /* Light mode */
+  --bg: #F1EADE;
+  --surface: #FFFFFF;
+  --text: #2C2016;
+  --border: #E3D6C3;
+  --text-inv: #FFFFFF;
+  --topbar-bg: #FFFFFF;
+  --input-bg: #F1EADE;
+}
+[data-theme="dark"] {
+  --bg: #0F0A05;
+  --surface: #1C1209;
+  --text: #EDE5D8;
+  --border: #2E200F;
+  --muted: #8A7360;
+  --cream: #1C1209;
+  --cream-d: #2E200F;
+  --topbar-bg: #1C1209;
+  --input-bg: #0F0A05;
+  --shadow: 0 2px 16px rgba(0,0,0,0.35);
+  --shadow-md: 0 6px 28px rgba(0,0,0,0.45);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: "Inter", sans-serif; background: var(--bg); color: var(--text); transition: background 0.25s, color 0.25s; }
+body { display: flex; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w); min-height: 100vh;
+  background: var(--sb-bg);
+  display: flex; flex-direction: column;
+  position: fixed; left:0; top:0; bottom:0; z-index:100;
+  box-shadow: 4px 0 40px rgba(0,0,0,0.35);
+}
+.sidebar-logo {
+  padding: 26px 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: flex; align-items: center; gap: 12px;
+}
+.logo-img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; border: 2px solid rgba(221,177,31,0.35); }
+.logo-name { font-family: "Playfair Display", serif; font-size: 14px; font-weight: 700; color: #F1EADE; line-height: 1.2; }
+.logo-sub { font-size: 9px; font-weight: 500; color: rgba(255,255,255,0.35); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 3px; }
+.sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+.nav-label { font-size: 9px; font-weight: 600; color: rgba(255,255,255,0.28); letter-spacing: 0.2em; text-transform: uppercase; padding: 0 10px; margin: 20px 0 7px; }
+.nav-item {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 11px; border-radius: 10px; cursor: pointer;
+  transition: all 0.2s; color: rgba(255,255,255,0.55);
+  font-size: 13px; font-weight: 500; margin-bottom: 2px; position: relative;
+}
+.nav-item:hover { background: var(--sb-hover); color: rgba(255,255,255,0.88); }
+.nav-item.active { background: var(--sb-active); color: var(--gold); }
+.nav-item.active::before { content:""; position:absolute; left:0; top:50%; transform:translateY(-50%); width:3px; height:55%; background:var(--gold); border-radius:0 3px 3px 0; }
+.ni-wrap { width:32px; height:32px; border-radius:8px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.nav-item.active .ni-wrap { background:rgba(221,177,31,0.18); }
+.ni-wrap svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.nav-badge { margin-left:auto; background:var(--gold); color:var(--sb-bg); font-size:10px; font-weight:700; padding:2px 7px; border-radius:20px; }
+.nav-badge.red { background:#963028; color:#fff; }
+.sidebar-footer { padding:14px; border-top:1px solid rgba(255,255,255,0.07); }
+.user-card { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; background:rgba(255,255,255,0.05); }
+.user-av { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--brown),var(--gold)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:#fff; flex-shrink:0; }
+.user-name { font-size:12px; font-weight:600; color:rgba(255,255,255,0.85); }
+.user-role { font-size:10px; color:rgba(255,255,255,0.38); }
+
+/* MAIN */
+.main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; overflow:hidden; }
+.topbar {
+  height:62px; background:var(--topbar-bg);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 26px; gap:12px;
+  position:sticky; top:0; z-index:150;
+  box-shadow:0 1px 6px rgba(0,0,0,0.04);
+  transition: background 0.25s, border-color 0.25s;
+  overflow: visible;
+}
+.topbar-title { font-family:"Playfair Display",serif; font-size:20px; font-weight:600; color:var(--brown); flex:1; }
+.search-box { display:flex; align-items:center; gap:8px; background:var(--input-bg); border:1.5px solid var(--border); border-radius:10px; padding:7px 13px; width:320px; transition:border-color 0.2s,width 0.25s; position:relative; }
+.search-box:focus-within { border-color:var(--brown); width:360px; }
+.search-box input { border:none; background:transparent; font-family:"Inter"; font-size:13px; color:var(--text); outline:none; width:100%; }
+.search-box input::placeholder { color:var(--muted); }
+.sr-item { display:flex; align-items:center; gap:12px; padding:10px 16px; cursor:pointer; transition:background 0.15s; border-bottom:1px solid var(--border); }
+.sr-item:last-child { border-bottom:none; }
+.sr-item:hover,.sr-item.focused { background:rgba(115,76,31,0.06); }
+.sr-icon { width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.sr-cat { font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding:10px 16px 4px;background:var(--bg); }
+.sr-title { font-size:13px;font-weight:600;color:var(--text); }
+.sr-sub { font-size:11px;color:var(--muted);margin-top:1px; }
+.sr-badge { margin-left:auto;flex-shrink:0; }
+mark { background:rgba(221,177,31,0.35);color:inherit;border-radius:2px;padding:0 1px; }
+
+/* DARK MODE SWITCH */
+.theme-switch { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
+.switch-track { width:42px; height:24px; background:var(--border); border-radius:12px; position:relative; transition:background 0.25s; }
+[data-theme="dark"] .switch-track { background:var(--gold); }
+.switch-thumb { position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform 0.25s; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+[data-theme="dark"] .switch-thumb { transform:translateX(18px); }
+.switch-icon { font-size:14px; }
+
+.btn { display:inline-flex; align-items:center; gap:7px; padding:9px 18px; border-radius:10px; font-family:"Inter"; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all 0.2s; white-space:nowrap; }
+.btn-primary { background:var(--brown); color:#fff; }
+.btn-primary:hover { background:var(--brown-h); transform:translateY(-1px); box-shadow:var(--shadow-md); }
+.btn-gold { background:var(--gold); color:var(--sb-bg); }
+.btn-gold:hover { opacity:.88; }
+.btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--brown); }
+.btn-outline:hover { border-color:var(--brown); background:var(--cream); }
+.btn-sm { padding:6px 12px; font-size:12px; border-radius:8px; }
+.btn-danger-soft { background:#F9ECEA; color:var(--danger); border:1.5px solid #EBBBB5; }
+.btn-success-soft { background:#EAF3EE; color:var(--success); border:1.5px solid #B5D6C4; }
+
+.content { padding:26px; flex:1; overflow-y:auto; height:calc(100vh - 62px); }
+.page { display:none; animation:fadeIn 0.22s ease; }
+.page.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* CARDS */
+.card { background:var(--surface); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); border:1px solid var(--border); transition:background 0.25s,border-color 0.25s; }
+.card-title { font-family:"Playfair Display",serif; font-size:15px; font-weight:600; color:var(--brown); margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; }
+
+/* KPI */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:22px; }
+.kpi-card { background:var(--surface); border-radius:var(--radius); padding:18px; border:1px solid var(--border); box-shadow:var(--shadow); position:relative; overflow:hidden; transition:transform 0.2s,box-shadow 0.2s,background 0.25s; }
+.kpi-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-md); }
+.kpi-card::before { content:""; position:absolute; top:0;left:0;right:0;height:3px; }
+.kpi-br::before { background:var(--brown); }
+.kpi-go::before { background:var(--gold); }
+.kpi-gr::before { background:var(--success); }
+.kpi-re::before { background:var(--danger); }
+.kpi-label { font-size:10px; font-weight:600; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-bottom:9px; }
+.kpi-val { font-family:"Playfair Display",serif; font-size:26px; font-weight:700; color:var(--text); line-height:1; }
+.kpi-sub { font-size:11px; color:var(--muted); margin-top:5px; }
+.kpi-ico { position:absolute; top:14px;right:14px; width:36px;height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+.kpi-br .kpi-ico { background:rgba(115,76,31,0.09); }
+.kpi-go .kpi-ico { background:rgba(221,177,31,0.14); }
+.kpi-gr .kpi-ico { background:rgba(61,122,84,0.11); }
+.kpi-re .kpi-ico { background:rgba(150,48,40,0.10); }
+
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.grid-12 { display:grid; grid-template-columns:1.75fr 1fr; gap:18px; }
+
+/* TABLE */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead th { background:var(--cream); color:var(--brown); font-weight:600; font-size:10px; letter-spacing:.08em; text-transform:uppercase; padding:9px 13px; text-align:left; border-bottom:2px solid var(--border); }
+tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; }
+tbody tr:hover { background:rgba(115,76,31,0.04); }
+tbody tr:last-child { border-bottom:none; }
+td { padding:12px 13px; color:var(--text); vertical-align:middle; }
+
+/* BADGES */
+.badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+.bs { background:#EAF3EE; color:var(--success); }
+.bw { background:#FDF3E3; color:var(--warning); }
+.bd { background:#F9ECEA; color:var(--danger); }
+.bi { background:#E3EDF5; color:var(--info); }
+.bg { background:rgba(221,177,31,0.14); color:#7A5800; }
+.bbr { background:rgba(115,76,31,0.11); color:var(--brown); }
+.bgr { background:var(--cream); color:var(--muted); }
+.dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:5px; }
+.dg{background:var(--success)} .do{background:var(--warning)} .dr{background:var(--danger)} .dgy{background:#aaa}
+
+/* PAGE HEADER */
+.page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; }
+.page-header h2 { font-family:"Playfair Display",serif; font-size:24px; font-weight:700; color:var(--brown); }
+.page-header p { font-size:13px; color:var(--muted); margin-top:3px; }
+
+/* PROGRESS */
+.progress-bar { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-top:7px; }
+.pf { height:100%; border-radius:3px; background:var(--brown); }
+.pf-go { background:var(--gold); } .pf-gr { background:var(--success); }
+
+/* ACTIVITY */
+.activity-item { display:flex; gap:11px; padding:10px 0; border-bottom:1px solid var(--border); }
+.activity-item:last-child { border-bottom:none; }
+.act-dot { width:8px; height:8px; border-radius:50%; background:var(--gold); margin-top:5px; flex-shrink:0; }
+.act-text { font-size:13px; color:var(--text); line-height:1.5; }
+.act-time { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* CALENDAR */
+.mini-cal { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; text-align:center; }
+.cal-head { font-size:10px; font-weight:600; color:var(--muted); padding:4px 0; }
+.cal-day { width:27px; height:27px; display:flex; align-items:center; justify-content:center; font-size:12px; border-radius:7px; cursor:pointer; transition:background 0.15s; margin:auto; position:relative; color:var(--text); }
+.cal-day:hover { background:var(--cream); }
+.cal-day.today { background:var(--brown); color:#fff; font-weight:700; }
+.cal-day.has-event::after { content:""; position:absolute; bottom:3px; width:4px; height:4px; background:var(--gold); border-radius:50%; }
+.cal-day.om { color:var(--border); }
+
+/* EVENT */
+.event-card { border-left:3px solid var(--brown); background:var(--bg); border-radius:0 8px 8px 0; padding:9px 13px; margin-bottom:9px; }
+.event-card:hover { background:var(--cream-d); }
+.event-card.ec-go { border-color:var(--gold); } .event-card.ec-gr { border-color:var(--success); }
+.event-title { font-weight:600; font-size:13px; color:var(--text); }
+.event-meta { font-size:11px; color:var(--muted); margin-top:3px; }
+
+/* FORM */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group.full { grid-column:1/-1; }
+label { font-size:12px; font-weight:600; color:var(--brown); }
+input, select, textarea { font-family:"Inter"; font-size:13px; padding:9px 13px; border:1.5px solid var(--border); border-radius:9px; background:var(--input-bg); color:var(--text); outline:none; transition:border-color 0.2s,background 0.25s; }
+input:focus, select:focus, textarea:focus { border-color:var(--brown); background:var(--surface); }
+textarea { resize:vertical; min-height:75px; }
+
+/* MODAL */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--surface); border-radius:16px; padding:28px; width:600px; max-width:92vw; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.25); animation:mIn 0.22s ease; border:1px solid var(--border); }
+@keyframes mIn { from{opacity:0;transform:scale(0.95) translateY(-8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.modal-title { font-family:"Playfair Display",serif; font-size:20px; font-weight:700; color:var(--brown); }
+.modal-close { width:30px; height:30px; border-radius:8px; background:var(--cream); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:15px; color:var(--muted); transition:background 0.15s; }
+.modal-close:hover { background:var(--cream-d); }
+.modal-footer { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
+
+/* TEAM */
+.team-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; }
+.team-card { background:var(--surface); border-radius:var(--radius); padding:18px; border:1px solid var(--border); box-shadow:var(--shadow); text-align:center; transition:transform 0.2s,box-shadow 0.2s,background 0.25s; }
+.team-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); }
+.team-av { width:48px;height:48px; border-radius:50%; background:linear-gradient(135deg,var(--brown),var(--gold)); display:flex; align-items:center; justify-content:center; font-family:"Playfair Display",serif; font-size:19px; font-weight:700; color:#fff; margin:0 auto 11px; }
+.team-name { font-weight:600; font-size:13.5px; margin-bottom:3px; color:var(--text); }
+.team-role { font-size:11px; color:var(--muted); margin-bottom:9px; }
+
+/* STAT ROW */
+.stat-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.stat-row:last-child { border-bottom:none; }
+.stat-label { color:var(--muted); }
+.stat-val { font-weight:600; color:var(--text); }
+
+/* TOAST */
+.toast { position:fixed; bottom:20px; right:20px; background:var(--sb-bg); color:var(--cream); padding:12px 18px; border-radius:12px; font-size:13px; font-weight:500; box-shadow:0 8px 30px rgba(0,0,0,0.3); z-index:9999; transform:translateY(80px); transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1); display:flex; align-items:center; gap:9px; border-left:3px solid var(--gold); }
+.toast.show { transform:translateY(0); }
+
+/* DEVIS BUILDER */
+.devis-line { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:8px; align-items:center; margin-bottom:8px; }
+.devis-line input { padding:7px 10px; font-size:12px; }
+.devis-total-bar { background:var(--bg); border-radius:10px; padding:12px 16px; margin-top:10px; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border); }
+.devis-total-label { font-size:13px; font-weight:600; color:var(--muted); }
+.devis-total-val { font-family:"Playfair Display",serif; font-size:22px; font-weight:700; color:var(--brown); }
+
+/* DIVIDER */
+.section-divider { height:1px; background:var(--border); margin:14px 0; }
+
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--brown); }
+
+/* Icon helper */
+.ico { width:16px;height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <img class="logo-img" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAH0AfQDASIAAhEBAxEB/8QAHAABAAEFAQEAAAAAAAAAAAAAAAcBBAUGCAMC/8QAVBAAAQMDAQUDBgYPAwoGAwAAAQACAwQFEQYHEiExQRNRYQgUInGBkTJCUqGxwRcjMzZUYnJ0dYKys9HT4RWU8BY3OFNjkpOiwtIkJ0NVc4M1RPH/xAAaAQEAAwEBAQAAAAAAAAAAAAAAAgMFAQQG/8QAMBEBAAICAQMDAwIFBAMAAAAAAAECAxEEEiExEyJBM1FhFHEjMlKBwQUkQqGRsdH/2gAMAwEAAhEDEQA/AOq0RF5F4iIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiBlERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAyiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiIMLqi6y29kLKct7V7snIz6I/x8yrp28S3N0jJKcMMbcl7TwPhhaxqOr88u0zwcsYdxnqH9clbRpKk82tLXuGHzHfPq6fNx9qzcWa+XkTET7Ye/JipjwRuO7MIiLSeAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBEVHuaxhe9wa1oySTgAd6Cp8VGWs9tOlbDUvo6Fst5qmHDvN3ARNPcXnn+qCtB22bWnXQzac0vUFtBxZVVjDgz97WHozvPxvVzhdZ2fmanpx/+Xuw8TcbunyHyiYjIBNpJ7I88XMuAcR7DGPpUi6F2laW1e8U9BVPp64jPmlSAyQ/k8SHew58Fx6vSnmmp5456eV8U0bg5j2Ow5rhxBBHIqinNyRPu7rr8THMduzvBFEmxbatFqJkVh1BKyG8NG7DMfRbVfUH+HXp3KW1q48lcleqrOvSaTqRERTQEREBERAREQEREBWN+q/MrXNMDh5G6z8o/wCM+xXy1HXFXv1MVG08Ixvv9Z5fN9K8/JyenimV3Hx+pkiGFtlKayvhphnD3el4Dr8ykdrQ1oa0AADAC1bQ1Jl01a4cvtbPpP1LalRwMfTj6p+V3NydV+n7CIi97xiIiAiIgIiICIiAiIgIiICIiBlERAREQEREBERAREQEREBERAREQEREBERAREQEREBEXjXVVNQ0ktZWTxwU8LC+SSR2GtaOZJQfdRNFTwPnnkZFFG0ue97gGtA4kknkFzVtq2ry6hfLYdPSvitAJbNOMh1V4d4Z4devcrPbLtSqdWTvtFnfJT2NjuPxX1RHxndze5vtPHAEYLK5PK6vbTw0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U/Z09K10fov3gd7DMjkDxJzxUioo048UntM6+yVs02jvEIX2+7Or/qK90modORNqZmQCGaASNY8FriWvaXEA88c88BjPTPbJ37UZrvPLrhvZ29tKWwtLYQ50u830iGceW9z4KSkSMERfriZcnNM06ZhB2wfQerNM64rLlfLV5pSyUMkTJPOIn5cZIyBhrieTT0WV2y7MLhf7xFqjTE7IbtGG9rE5+4ZXMxuPa7kHAADjw4DiMcZcRcjjUinR8OzntN+v5QY2r8oKaIUIoIYngbrqkimz687xHuC3bWtg1FdNjEthcBcL6+lgZLiVo7SRsjHPO87A6E8cLfUXa4dRMTMztycu5iYiI0jnyf8ATV70tpGsoL9ReaVMle6ZjO1Y/LDHGAcsJHNpWqam0Hqys28xanprVv2ltwpJjUecRD0GNjDjul29wLT06KcUScFZpFfs7Ga0Wm33Fpe1zQkWubBHTMmZTXCleZKWZ4JaM/Ca7HQ4HHpgepboittWLx0yrraazuEBWan266at0dkobfFU0sI3IHufDJuNHIBxcDjuDlJ2yym1nBZ6qXW9S2WvnqN+NjXtPZM3QN3DBujiDyytvRVY8PRO9ynfL1xrUOftoOzzW9t2kT6s0fB5yJpzUxvjewPhe4ekHNeRkEl3LPA8VJ+yo65fa6uXXQa2rfODTsAiG7Huj/V8OffxW5IlMEUtNomf2+C2abV6ZgREV6oREQEREBERAyiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIoI1trTVFDt5p7BSXeaK2OrqKN1OGt3S14j3hkjPHePvUvaz1Hb9KaenvdyEroIS1u5EAXvc4gANBIGeOefIFU1zVt1fhZbFNdflmUWM0teqbUWn6O9Ucc0dPVs32NlADwMkccEjp3rR9oEu1BuvrazS8bTYyI+19GIsJ3jv9oXekOGOXs4qVskVr1a3+zlabnXhJaIisQEREBERAREQEREBFre0p2p2aQq3aQaHXbLOz4NLt3eG9uh3ok47/ZxwvjZg/VT9I07tYtDbpvuzkNDizPo7wbwz/TPHKh1+7p0l0+3q22dERTREREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBQB5RWo71YdololtlyqoGRUUU5hZM5sT3CZ/wmggEHAB7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iIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiIGUREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREBERAREQEREDKIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiAiIgIiICIiBlERAREQE6oiAiIgJ1REBERATqiICIiAnVEQEREBOqIgIiICdURAREQE6oiAiIgJ1REBERATqiICIiAnVEQEREBOqIgIiICdURAREQE6oiAiIgJ1REBERATqiICIiAUREH//2Q==" alt="AEM">
+    <div>
+      <div class="logo-name">Agence d'entretien<br>et multi-service</div>
+      <div class="logo-sub">Dashboard Pro</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <div class="ni-wrap"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+      Tableau de bord
+    </div>
+    <div class="nav-label">Opérations</div>
+    <div class="nav-item" onclick="showPage('planning',this)">
+      <div class="ni-wrap"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+      Planning<span class="nav-badge">3</span>
+    </div>
+    <div class="nav-item" onclick="showPage('chantiers',this)">
+      <div class="ni-wrap"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
+      Chantiers<span class="nav-badge">5</span>
+    </div>
+    <div class="nav-label">Commercial</div>
+    <div class="nav-item" onclick="showPage('clients',this)">
+      <div class="ni-wrap"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
+      Clients & Devis
+    </div>
+    <div class="nav-item" onclick="showPage('facturation',this)">
+      <div class="ni-wrap"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      Facturation<span class="nav-badge red">2</span>
+    </div>
+    <div class="nav-label">Équipe</div>
+    <div class="nav-item" onclick="showPage('equipe',this)">
+      <div class="ni-wrap"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg></div>
+      Équipe & Personnel
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-av">M</div>
+      <div><div class="user-name">Manager AEM</div><div class="user-role">Administrateur</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-title" id="topbar-title">Tableau de bord</div>
+    <div class="search-box" id="search-box-wrap">
+      <svg class="ico" style="stroke:var(--muted);flex-shrink:0" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Rechercher client, chantier, facture..." autocomplete="off" oninput="handleSearch(this.value)" onfocus="showSearchPanel()" onkeydown="searchKeyNav(event)">
+      <span id="search-clear" onclick="clearSearch()" style="cursor:pointer;color:var(--muted);font-size:16px;display:none;flex-shrink:0">×</span>
+    </div>
+    <!-- SEARCH PANEL -->
+    <div id="search-panel" style="
+      display:none;position:absolute;top:62px;left:50%;transform:translateX(-50%);
+      width:540px;max-width:90vw;background:var(--surface);
+      border:1.5px solid var(--border);border-radius:14px;
+      box-shadow:0 12px 40px rgba(0,0,0,0.18);z-index:200;overflow:hidden;
+    ">
+      <div id="search-results" style="max-height:400px;overflow-y:auto;padding:8px 0;"></div>
+      <div id="search-empty" style="display:none;padding:28px;text-align:center;color:var(--muted)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32" style="margin-bottom:10px;opacity:.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <div style="font-size:14px">Aucun résultat pour cette recherche</div>
+      </div>
+    </div>
+    <!-- DARK MODE SWITCH -->
+    <div class="theme-switch" onclick="toggleTheme()" title="Mode sombre / clair">
+      <span class="switch-icon" id="switch-ico">☀️</span>
+      <div class="switch-track"><div class="switch-thumb"></div></div>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- ═══════════ DASHBOARD ═══════════ -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div><h2>Bonjour — Tableau de bord</h2><p>Mercredi 18 février 2025 · Vue globale de l'activité AEM</p></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-br">
+          <div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brown)" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+          <div class="kpi-label">CA du mois</div><div class="kpi-val">18 400</div><div class="kpi-sub">XOF · +12% vs mois dernier</div>
+        </div>
+        <div class="kpi-card kpi-go">
+          <div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+          <div class="kpi-label">Chantiers actifs</div><div class="kpi-val">5</div><div class="kpi-sub">2 planifiés cette semaine</div>
+        </div>
+        <div class="kpi-card kpi-gr">
+          <div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+          <div class="kpi-label">Agents présents</div><div class="kpi-val">8/10</div><div class="kpi-sub">2 absences aujourd'hui</div>
+        </div>
+        <div class="kpi-card kpi-re">
+          <div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg></div>
+          <div class="kpi-label">Factures impayées</div><div class="kpi-val">2</div><div class="kpi-sub">192 000 XOF en attente</div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="card-title">CA mensuel 2025 (XOF)</div>
+          <div style="height:200px"><canvas id="chartCA"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Répartition des prestations</div>
+          <div style="height:200px"><canvas id="chartTypes"></canvas></div>
+        </div>
+      </div>
+      <div class="grid-12">
+        <div class="card">
+          <div class="card-title">Interventions récentes
+            <button class="btn btn-outline btn-sm" onclick="showPage('chantiers',document.querySelector('[onclick*=chantiers]'))">Voir tout</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Client</th><th>Type</th><th>Date</th><th>Équipe</th><th>Statut</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Immeuble Horizon</strong></td><td>Fin de chantier</td><td>18/02</td><td>Équipe A</td><td><span class="badge bs"><span class="dot dg"></span>Terminé</span></td></tr>
+              <tr><td><strong>Société Techpro</strong></td><td>Bureaux</td><td>17/02</td><td>Équipe B</td><td><span class="badge bs"><span class="dot dg"></span>Terminé</span></td></tr>
+              <tr><td><strong>Résidence Lumière</strong></td><td>Appartement</td><td>19/02</td><td>Équipe A</td><td><span class="badge bw"><span class="dot do"></span>En cours</span></td></tr>
+              <tr><td><strong>Cabinet Santé+</strong></td><td>Locaux prof.</td><td>20/02</td><td>Équipe C</td><td><span class="badge bi"><span class="dot dgy"></span>Planifié</span></td></tr>
+              <tr><td><strong>École Riviera</strong></td><td>Fin de chantier</td><td>21/02</td><td>Équipe B</td><td><span class="badge bi"><span class="dot dgy"></span>Planifié</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Activité récente</div>
+            <div class="activity-item"><div class="act-dot"></div><div><div class="act-text">Facture <strong>#2025-018</strong> envoyée à Techpro</div><div class="act-time">Il y a 1h</div></div></div>
+            <div class="activity-item"><div class="act-dot" style="background:var(--success)"></div><div><div class="act-text">Intervention Horizon <strong>validée</strong></div><div class="act-time">Il y a 3h</div></div></div>
+            <div class="activity-item"><div class="act-dot" style="background:var(--danger)"></div><div><div class="act-text">Facture <strong>#2025-014</strong> — relance auto</div><div class="act-time">Hier</div></div></div>
+            <div class="activity-item"><div class="act-dot"></div><div><div class="act-text">Devis créé pour <strong>Résidence Lumière</strong></div><div class="act-time">Hier</div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Cette semaine</div>
+            <div class="stat-row"><span class="stat-label">Interventions prévues</span><span class="stat-val">8</span></div>
+            <div class="stat-row"><span class="stat-label">Heures planifiées</span><span class="stat-val">64h</span></div>
+            <div class="stat-row"><span class="stat-label">Devis en attente</span><span class="stat-val">3</span></div>
+            <div class="stat-row"><span class="stat-label">Satisfaction client</span><span class="stat-val" style="color:var(--success)">96%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ PLANNING ═══════════ -->
+    <div class="page" id="page-planning">
+      <div class="page-header">
+        <div><h2>Planning des interventions</h2><p>Organisation et suivi des interventions</p></div>
+        <button class="btn btn-primary" onclick="openModal('modal-intervention')">
+          <svg class="ico" style="stroke:#fff" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nouvelle intervention
+        </button>
+      </div>
+      <div class="grid-12">
+        <div class="card">
+          <div class="card-title">Calendrier — Février 2025</div>
+          <div class="mini-cal" style="margin-bottom:18px;">
+            <div class="cal-head">L</div><div class="cal-head">M</div><div class="cal-head">M</div><div class="cal-head">J</div><div class="cal-head">V</div><div class="cal-head">S</div><div class="cal-head">D</div>
+            <div class="cal-day om">27</div><div class="cal-day om">28</div><div class="cal-day om">29</div><div class="cal-day om">30</div><div class="cal-day om">31</div><div class="cal-day has-event">1</div><div class="cal-day">2</div>
+            <div class="cal-day has-event">3</div><div class="cal-day">4</div><div class="cal-day has-event">5</div><div class="cal-day has-event">6</div><div class="cal-day">7</div><div class="cal-day">8</div><div class="cal-day">9</div>
+            <div class="cal-day has-event">10</div><div class="cal-day">11</div><div class="cal-day has-event">12</div><div class="cal-day has-event">13</div><div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div>
+            <div class="cal-day has-event">17</div><div class="cal-day today">18</div><div class="cal-day has-event">19</div><div class="cal-day has-event">20</div><div class="cal-day has-event">21</div><div class="cal-day">22</div><div class="cal-day">23</div>
+            <div class="cal-day">24</div><div class="cal-day has-event">25</div><div class="cal-day">26</div><div class="cal-day has-event">27</div><div class="cal-day">28</div><div class="cal-day om">1</div><div class="cal-day om">2</div>
+          </div>
+          <div class="card-title">Prochaines interventions</div>
+          <div class="event-card"><div class="event-title">Résidence Lumière — Appartement meublé</div><div class="event-meta">19/02/2025 · 08h00–12h00 · Équipe A (2)</div></div>
+          <div class="event-card ec-go"><div class="event-title">Cabinet Santé+ — Locaux professionnels</div><div class="event-meta">20/02/2025 · 09h00–14h00 · Équipe C (3)</div></div>
+          <div class="event-card ec-gr"><div class="event-title">École Riviera — Fin de chantier</div><div class="event-meta">21/02/2025 · 07h00–17h00 · Équipe B (4)</div></div>
+          <div class="event-card"><div class="event-title">Pharmacie Centrale — Sols et murs</div><div class="event-meta">25/02/2025 · 06h00–10h00 · Équipe A (2)</div></div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Disponibilité équipes</div>
+            <div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:600">Équipe A</span><span class="badge bs">Disponible</span></div><div style="font-size:11px;color:var(--muted)">3 agents · 2 interventions</div><div class="progress-bar"><div class="pf" style="width:40%"></div></div></div>
+            <div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:600">Équipe B</span><span class="badge bw">Occupée</span></div><div style="font-size:11px;color:var(--muted)">4 agents · 3 interventions</div><div class="progress-bar"><div class="pf pf-go" style="width:75%"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:600">Équipe C</span><span class="badge bs">Disponible</span></div><div style="font-size:11px;color:var(--muted)">3 agents · 1 intervention</div><div class="progress-bar"><div class="pf pf-gr" style="width:25%"></div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Stats du mois</div>
+            <div class="stat-row"><span class="stat-label">Réalisées</span><span class="stat-val">22</span></div>
+            <div class="stat-row"><span class="stat-label">Heures travaillées</span><span class="stat-val">186h</span></div>
+            <div class="stat-row"><span class="stat-label">Ponctualité</span><span class="stat-val" style="color:var(--success)">94%</span></div>
+            <div class="stat-row"><span class="stat-label">Annulations</span><span class="stat-val" style="color:var(--danger)">1</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ CHANTIERS ═══════════ -->
+    <div class="page" id="page-chantiers">
+      <div class="page-header">
+        <div><h2>Suivi des chantiers</h2><p>Toutes les interventions AEM</p></div>
+        <button class="btn btn-primary" onclick="openModal('modal-chantier')">
+          <svg class="ico" style="stroke:#fff" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nouveau chantier
+        </button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-go"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg></div><div class="kpi-label">En cours</div><div class="kpi-val">2</div></div>
+        <div class="kpi-card kpi-gr"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="kpi-label">Terminés (mois)</div><div class="kpi-val">18</div></div>
+        <div class="kpi-card kpi-br"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brown)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div class="kpi-label">Planifiés</div><div class="kpi-val">3</div></div>
+        <div class="kpi-card kpi-re"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="kpi-label">En attente</div><div class="kpi-val">1</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tous les chantiers
+          <div style="display:flex;gap:8px">
+            <select style="padding:6px 12px;font-size:12px;border-radius:8px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text)"><option>Tous les statuts</option><option>En cours</option><option>Terminé</option><option>Planifié</option></select>
+            <select style="padding:6px 12px;font-size:12px;border-radius:8px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text)"><option>Tous les types</option><option>Bureaux</option><option>Fin de chantier</option><option>Appartement</option></select>
+          </div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Réf.</th><th>Client</th><th>Type</th><th>Date</th><th>Équipe</th><th>Budget (XOF)</th><th>Statut</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><strong style="color:var(--brown)">#CH-025</strong></td><td>Résidence Lumière</td><td><span class="badge bbr">Appartement</span></td><td>19/02</td><td>Équipe A</td><td>34 800</td><td><span class="badge bw">En cours</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+            <tr><td><strong style="color:var(--brown)">#CH-024</strong></td><td>Cabinet Santé+</td><td><span class="badge bg">Locaux</span></td><td>20/02</td><td>Équipe C</td><td>55 200</td><td><span class="badge bi">Planifié</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+            <tr><td><strong style="color:var(--brown)">#CH-023</strong></td><td>École Riviera</td><td><span class="badge bi">Fin chantier</span></td><td>21/02</td><td>Équipe B</td><td>144 000</td><td><span class="badge bi">Planifié</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+            <tr><td><strong style="color:var(--brown)">#CH-022</strong></td><td>Immeuble Horizon</td><td><span class="badge bi">Fin chantier</span></td><td>18/02</td><td>Équipe A</td><td>186 000</td><td><span class="badge bs">Terminé</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+            <tr><td><strong style="color:var(--brown)">#CH-021</strong></td><td>Société Techpro</td><td><span class="badge bbr">Bureaux</span></td><td>17/02</td><td>Équipe B</td><td>45 600</td><td><span class="badge bs">Terminé</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ CLIENTS & DEVIS ═══════════ -->
+    <div class="page" id="page-clients">
+      <div class="page-header">
+        <div><h2>Clients & Devis</h2><p>Gestion de la relation client et création de devis</p></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:18px;">
+        <div class="card">
+          <div class="card-title">
+            Devis en cours
+            <button class="btn btn-gold btn-sm" onclick="openModal('modal-devis')">
+              <svg class="ico" style="stroke:var(--sb-bg)" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Créer un devis
+            </button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>N° Devis</th><th>Client</th><th>Montant (XOF)</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+              <tr><td><strong>#D-031</strong></td><td>Pharmacie Centrale</td><td><strong>28 800</strong></td><td><span class="badge bw">En attente</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('modal-devis')">Voir</button></td></tr>
+              <tr><td><strong>#D-030</strong></td><td>Complexe sportif Nord</td><td><strong>111 000</strong></td><td><span class="badge bi">Envoyé</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('modal-devis')">Voir</button></td></tr>
+              <tr><td><strong>#D-029</strong></td><td>Résidence Les Pins</td><td><strong>19 200</strong></td><td><span class="badge bs">Accepté</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('modal-devis')">Voir</button></td></tr>
+              <tr><td><strong>#D-028</strong></td><td>Hôtel Bellevue</td><td><strong>252 000</strong></td><td><span class="badge bd">Refusé</span></td><td><button class="btn btn-outline btn-sm" onclick="openModal('modal-devis')">Voir</button></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Pipeline commercial</div>
+          <div style="height:170px"><canvas id="chartPipeline"></canvas></div>
+          <div class="section-divider"></div>
+          <div class="stat-row"><span class="stat-label">Taux de conversion</span><span class="stat-val" style="color:var(--success)">67%</span></div>
+          <div class="stat-row"><span class="stat-label">Valeur pipeline</span><span class="stat-val">399 000 XOF</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          Base clients
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-client')">
+            <svg class="ico" style="stroke:#fff" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nouveau client
+          </button>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Client</th><th>Type</th><th>Contact</th><th>Interventions</th><th>CA Total (XOF)</th><th>Statut</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><strong>Société Techpro</strong></td><td><span class="badge bbr">Entreprise</span></td><td>M. Dupont</td><td>8</td><td><strong>372 000</strong></td><td><span class="badge bs">Actif</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+            <tr><td><strong>Immeuble Horizon</strong></td><td><span class="badge bi">Copropriété</span></td><td>Mme Martin</td><td>3</td><td><strong>558 000</strong></td><td><span class="badge bs">Actif</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+            <tr><td><strong>Cabinet Santé+</strong></td><td><span class="badge bg">Professionnel</span></td><td>Dr. Bernard</td><td>12</td><td><strong>662 400</strong></td><td><span class="badge bs">Actif</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+            <tr><td><strong>Résidence Lumière</strong></td><td><span class="badge bgr">Particulier</span></td><td>M. Lefevre</td><td>2</td><td><strong>69 600</strong></td><td><span class="badge bs">Actif</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+            <tr><td><strong>École Riviera</strong></td><td><span class="badge bi">Institution</span></td><td>Mme Petit</td><td>1</td><td><strong>144 000</strong></td><td><span class="badge bw">Nouveau</span></td><td><button class="btn btn-outline btn-sm">Voir</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ FACTURATION ═══════════ -->
+    <div class="page" id="page-facturation">
+      <div class="page-header">
+        <div><h2>Facturation</h2><p>Factures, paiements et relances — XOF</p></div>
+        <button class="btn btn-primary" onclick="openModal('modal-facture')">
+          <svg class="ico" style="stroke:#fff" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nouvelle facture
+        </button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-br"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brown)" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div class="kpi-label">CA ce mois</div><div class="kpi-val" style="font-size:22px">1 104 000</div><div class="kpi-sub">XOF</div></div>
+        <div class="kpi-card kpi-gr"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="kpi-label">Payées</div><div class="kpi-val" style="font-size:22px">912 000</div><div class="kpi-sub">XOF</div></div>
+        <div class="kpi-card kpi-re"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div><div class="kpi-label">Impayées</div><div class="kpi-val" style="font-size:22px">192 000</div><div class="kpi-sub">XOF</div></div>
+        <div class="kpi-card kpi-go"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="kpi-label">En attente</div><div class="kpi-val">4</div><div class="kpi-sub">factures</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Toutes les factures
+          <select style="padding:6px 12px;font-size:12px;border-radius:8px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text)"><option>Tous les statuts</option><option>Payée</option><option>Impayée</option><option>En attente</option></select>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>N° Facture</th><th>Client</th><th>Chantier</th><th>Date</th><th>Échéance</th><th>Montant (XOF)</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr><td><strong style="color:var(--brown)">#2025-019</strong></td><td>Immeuble Horizon</td><td>#CH-022</td><td>18/02</td><td>20/03</td><td><strong>186 000</strong></td><td><span class="badge bw">En attente</span></td><td style="display:flex;gap:6px"><button class="btn btn-outline btn-sm">PDF</button><button class="btn btn-success-soft btn-sm" onclick="showToast('Facture marquée payée !')">✓ Payée</button></td></tr>
+            <tr><td><strong style="color:var(--brown)">#2025-018</strong></td><td>Société Techpro</td><td>#CH-021</td><td>17/02</td><td>19/03</td><td><strong>45 600</strong></td><td><span class="badge bw">En attente</span></td><td style="display:flex;gap:6px"><button class="btn btn-outline btn-sm">PDF</button><button class="btn btn-success-soft btn-sm" onclick="showToast('Facture marquée payée !')">✓ Payée</button></td></tr>
+            <tr><td><strong style="color:var(--brown)">#2025-017</strong></td><td>Cabinet Santé+</td><td>#CH-020</td><td>10/02</td><td>12/03</td><td><strong>55 200</strong></td><td><span class="badge bs">Payée</span></td><td><button class="btn btn-outline btn-sm">PDF</button></td></tr>
+            <tr><td><strong style="color:var(--brown)">#2025-014</strong></td><td>Hôtel Bellevue</td><td>#CH-017</td><td>20/01</td><td>20/02</td><td><strong>158 400</strong></td><td><span class="badge bd">Impayée</span></td><td style="display:flex;gap:6px"><button class="btn btn-outline btn-sm">PDF</button><button class="btn btn-danger-soft btn-sm" onclick="showToast('Relance envoyée !')">Relance</button></td></tr>
+            <tr><td><strong style="color:var(--brown)">#2025-013</strong></td><td>Pharmacie Centrale</td><td>#CH-016</td><td>18/01</td><td>18/02</td><td><strong>33 600</strong></td><td><span class="badge bd">Impayée</span></td><td style="display:flex;gap:6px"><button class="btn btn-outline btn-sm">PDF</button><button class="btn btn-danger-soft btn-sm" onclick="showToast('Relance envoyée !')">Relance</button></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ ÉQUIPE ═══════════ -->
+    <div class="page" id="page-equipe">
+      <div class="page-header">
+        <div><h2>Équipe & Personnel</h2><p>Gestion des agents AEM</p></div>
+        <button class="btn btn-primary" onclick="openModal('modal-employe')">
+          <svg class="ico" style="stroke:#fff" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter un agent
+        </button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-br"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brown)" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div><div class="kpi-label">Total agents</div><div class="kpi-val">10</div></div>
+        <div class="kpi-card kpi-gr"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div class="kpi-label">Présents</div><div class="kpi-val">8</div></div>
+        <div class="kpi-card kpi-re"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="kpi-label">Absents</div><div class="kpi-val">2</div></div>
+        <div class="kpi-card kpi-go"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="kpi-label">Heures ce mois</div><div class="kpi-val">186h</div></div>
+      </div>
+      <div class="team-grid">
+        <div class="team-card"><div class="team-av">KD</div><div class="team-name">Kofi Diallo</div><div class="team-role">Chef d'équipe A</div><span class="badge bs">Présent</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">2 interventions aujourd'hui</div></div>
+        <div class="team-card"><div class="team-av">AM</div><div class="team-name">Aminata Mbaye</div><div class="team-role">Agent · Équipe A</div><span class="badge bs">Présent</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">1 intervention</div></div>
+        <div class="team-card"><div class="team-av">SC</div><div class="team-name">Sidi Coulibaly</div><div class="team-role">Chef d'équipe B</div><span class="badge bw">En intervention</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">École Riviera</div></div>
+        <div class="team-card"><div class="team-av">FT</div><div class="team-name">Fatou Traoré</div><div class="team-role">Agent · Équipe B</div><span class="badge bw">En intervention</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">École Riviera</div></div>
+        <div class="team-card"><div class="team-av">IB</div><div class="team-name">Ibrahim Ba</div><div class="team-role">Agent · Équipe B</div><span class="badge bs">Présent</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">Disponible</div></div>
+        <div class="team-card"><div class="team-av">ML</div><div class="team-name">Mariama Ly</div><div class="team-role">Chef d'équipe C</div><span class="badge bs">Présent</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">1 intervention prévue</div></div>
+        <div class="team-card"><div class="team-av">OD</div><div class="team-name">Ousmane Diouf</div><div class="team-role">Agent · Équipe C</div><span class="badge bs">Présent</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">Disponible</div></div>
+        <div class="team-card"><div class="team-av">AB</div><div class="team-name">Awa Baldé</div><div class="team-role">Agent · Équipe A</div><span class="badge bs">Présent</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">Disponible</div></div>
+        <div class="team-card"><div class="team-av">MS</div><div class="team-name">Moussa Sarr</div><div class="team-role">Agent · Équipe C</div><span class="badge bd">Absent</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">Congé maladie</div></div>
+        <div class="team-card"><div class="team-av">NK</div><div class="team-name">Ndeye Kouyaté</div><div class="team-role">Agent · Équipe B</div><span class="badge bd">Absent</span><div style="margin-top:9px;font-size:11px;color:var(--muted)">Congé payé</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- MODAL DEVIS (complet avec lignes de prestation) -->
+<div class="modal-overlay" id="modal-devis" onclick="closeModalClick(event,'modal-devis')">
+  <div class="modal" style="width:700px">
+    <div class="modal-header">
+      <div class="modal-title">Créer un devis</div>
+      <button class="modal-close" onclick="closeModal('modal-devis')">✕</button>
+    </div>
+    <div class="form-grid" style="margin-bottom:16px">
+      <div class="form-group"><label>Client *</label><select><option>-- Sélectionner --</option><option>Société Techpro</option><option>Cabinet Santé+</option><option>Immeuble Horizon</option><option>Résidence Lumière</option><option>École Riviera</option><option>Pharmacie Centrale</option></select></div>
+      <div class="form-group"><label>Date du devis</label><input type="date"></div>
+      <div class="form-group"><label>Validité (jours)</label><input type="number" value="30"></div>
+      <div class="form-group"><label>Type de prestation</label><select><option>Bureaux / Locaux professionnels</option><option>Fin de chantier</option><option>Sols, murs et mobilier</option><option>Appartement meublé</option></select></div>
+      <div class="form-group full"><label>Adresse du chantier</label><input type="text" placeholder="Adresse complète"></div>
+    </div>
+
+    <div class="section-divider"></div>
+    <div style="font-size:12px;font-weight:600;color:var(--brown);margin-bottom:10px;letter-spacing:.04em;text-transform:uppercase">Lignes de prestation</div>
+
+    <div style="display:grid;grid-template-columns:2.5fr 1fr 1.2fr 1.2fr 30px;gap:6px;margin-bottom:6px;padding:0 4px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Description</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Qté</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">P.U. (XOF)</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Total (XOF)</div>
+      <div></div>
+    </div>
+    <div id="devis-lines">
+      <div class="devis-line" id="line-1">
+        <input type="text" placeholder="Ex: Nettoyage sol 200m²" oninput="calcLine('line-1')">
+        <input type="number" value="1" min="1" oninput="calcLine('line-1')">
+        <input type="number" placeholder="0" oninput="calcLine('line-1')">
+        <input type="text" id="line-1-total" placeholder="0" readonly style="background:var(--cream);font-weight:600;color:var(--brown)">
+        <button onclick="removeLine('line-1')" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px;padding:4px">×</button>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-sm" style="margin-top:6px" onclick="addLine()">
+      <svg class="ico" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ajouter une ligne
+    </button>
+
+    <div class="section-divider" style="margin-top:16px"></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Remise (%)</label><input type="number" id="devis-remise" value="0" min="0" max="100" oninput="calcTotal()"></div>
+      <div class="form-group"><label>TVA (%)</label><input type="number" id="devis-tva" value="18" min="0" oninput="calcTotal()"></div>
+    </div>
+    <div class="devis-total-bar">
+      <div>
+        <div class="devis-total-label">Sous-total HT: <span id="dt-ht" style="color:var(--text)">0</span> XOF</div>
+        <div class="devis-total-label" style="margin-top:2px">Remise: <span id="dt-remise">0</span> XOF · TVA: <span id="dt-tva">0</span> XOF</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">TOTAL TTC</div>
+        <div class="devis-total-val" id="dt-ttc">0 XOF</div>
+      </div>
+    </div>
+    <div class="form-group full" style="margin-top:14px"><label>Notes / Conditions particulières</label><textarea placeholder="Délai d'exécution, conditions de paiement, remarques..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-devis')">Annuler</button>
+      <button class="btn btn-outline" onclick="showToast('Devis enregistré en brouillon')">Brouillon</button>
+      <button class="btn btn-primary" onclick="saveAndClose('modal-devis','Devis créé et envoyé au client !')">Envoyer au client</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INTERVENTION -->
+<div class="modal-overlay" id="modal-intervention" onclick="closeModalClick(event,'modal-intervention')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Nouvelle intervention</div><button class="modal-close" onclick="closeModal('modal-intervention')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Client *</label><select><option>-- Sélectionner --</option><option>Société Techpro</option><option>Cabinet Santé+</option><option>Immeuble Horizon</option></select></div>
+      <div class="form-group"><label>Type *</label><select><option>Bureaux / Locaux</option><option>Fin de chantier</option><option>Sols, murs, mobilier</option><option>Appartement meublé</option></select></div>
+      <div class="form-group"><label>Date *</label><input type="date"></div>
+      <div class="form-group"><label>Heure début</label><input type="time" value="08:00"></div>
+      <div class="form-group"><label>Heure fin</label><input type="time" value="12:00"></div>
+      <div class="form-group"><label>Équipe *</label><select><option>Équipe A</option><option>Équipe B</option><option>Équipe C</option></select></div>
+      <div class="form-group"><label>Budget (XOF)</label><input type="number" placeholder="0"></div>
+      <div class="form-group"><label>Adresse</label><input type="text" placeholder="Adresse complète"></div>
+      <div class="form-group full"><label>Notes</label><textarea placeholder="Accès, codes, consignes..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modal-intervention')">Annuler</button><button class="btn btn-primary" onclick="saveAndClose('modal-intervention','Intervention planifiée !')">Planifier</button></div>
+  </div>
+</div>
+
+<!-- MODAL CHANTIER -->
+<div class="modal-overlay" id="modal-chantier" onclick="closeModalClick(event,'modal-chantier')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Nouveau chantier</div><button class="modal-close" onclick="closeModal('modal-chantier')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Client *</label><select><option>-- Sélectionner --</option><option>Société Techpro</option><option>Immeuble Horizon</option></select></div>
+      <div class="form-group"><label>Type</label><select><option>Fin de chantier</option><option>Bureaux</option><option>Sols & Murs</option><option>Appartement meublé</option></select></div>
+      <div class="form-group"><label>Date prévue</label><input type="date"></div>
+      <div class="form-group"><label>Budget (XOF)</label><input type="number" placeholder="0"></div>
+      <div class="form-group full"><label>Adresse</label><input type="text" placeholder="Adresse complète"></div>
+      <div class="form-group full"><label>Description</label><textarea placeholder="Surface, accès, remarques..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modal-chantier')">Annuler</button><button class="btn btn-primary" onclick="saveAndClose('modal-chantier','Chantier créé !')">Créer</button></div>
+  </div>
+</div>
+
+<!-- MODAL CLIENT -->
+<div class="modal-overlay" id="modal-client" onclick="closeModalClick(event,'modal-client')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Nouveau client</div><button class="modal-close" onclick="closeModal('modal-client')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Nom / Raison sociale *</label><input type="text"></div>
+      <div class="form-group"><label>Type</label><select><option>Entreprise</option><option>Particulier</option><option>Copropriété</option><option>Institution</option></select></div>
+      <div class="form-group"><label>Contact</label><input type="text"></div>
+      <div class="form-group"><label>Téléphone</label><input type="tel"></div>
+      <div class="form-group full"><label>Email</label><input type="email"></div>
+      <div class="form-group full"><label>Adresse</label><input type="text"></div>
+      <div class="form-group"><label>Conditions paiement</label><select><option>30 jours</option><option>45 jours</option><option>60 jours</option><option>Comptant</option></select></div>
+      <div class="form-group"><label>Source</label><select><option>Bouche à oreille</option><option>Site web</option><option>WhatsApp</option><option>Autre</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modal-client')">Annuler</button><button class="btn btn-primary" onclick="saveAndClose('modal-client','Client ajouté !')">Enregistrer</button></div>
+  </div>
+</div>
+
+<!-- MODAL FACTURE -->
+<div class="modal-overlay" id="modal-facture" onclick="closeModalClick(event,'modal-facture')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Nouvelle facture</div><button class="modal-close" onclick="closeModal('modal-facture')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Client *</label><select><option>-- Sélectionner --</option><option>Société Techpro</option><option>Immeuble Horizon</option></select></div>
+      <div class="form-group"><label>Chantier lié</label><select><option>-- Sélectionner --</option><option>#CH-025</option><option>#CH-024</option></select></div>
+      <div class="form-group"><label>Date d'émission</label><input type="date"></div>
+      <div class="form-group"><label>Date d'échéance</label><input type="date"></div>
+      <div class="form-group"><label>Montant HT (XOF)</label><input type="number" placeholder="0"></div>
+      <div class="form-group"><label>TVA (%)</label><select><option>18%</option><option>0%</option></select></div>
+      <div class="form-group full"><label>Description</label><textarea placeholder="Détail des travaux..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modal-facture')">Annuler</button><button class="btn btn-primary" onclick="saveAndClose('modal-facture','Facture créée !')">Créer</button></div>
+  </div>
+</div>
+
+<!-- MODAL EMPLOYÉ -->
+<div class="modal-overlay" id="modal-employe" onclick="closeModalClick(event,'modal-employe')">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Ajouter un agent</div><button class="modal-close" onclick="closeModal('modal-employe')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Prénom *</label><input type="text"></div>
+      <div class="form-group"><label>Nom *</label><input type="text"></div>
+      <div class="form-group"><label>Poste</label><select><option>Agent de nettoyage</option><option>Chef d'équipe</option><option>Superviseur</option></select></div>
+      <div class="form-group"><label>Équipe</label><select><option>Équipe A</option><option>Équipe B</option><option>Équipe C</option></select></div>
+      <div class="form-group"><label>Téléphone</label><input type="tel"></div>
+      <div class="form-group"><label>Contrat</label><select><option>CDI</option><option>CDD</option><option>Intérimaire</option></select></div>
+      <div class="form-group"><label>Date d'embauche</label><input type="date"></div>
+      <div class="form-group"><label>Salaire brut (XOF)</label><input type="number"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modal-employe')">Annuler</button><button class="btn btn-primary" onclick="saveAndClose('modal-employe','Agent ajouté !')">Ajouter</button></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5" width="15" height="15"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg">Action réalisée !</span>
+</div>
+
+<script>
+// ── THEME ──────────────────────────────────────────────
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  document.documentElement.setAttribute("data-theme", isDark ? "light" : "dark");
+  document.getElementById("switch-ico").textContent = isDark ? "☀️" : "🌙";
+  updateChartsTheme();
+}
+
+// ── NAV ────────────────────────────────────────────────
+const pageNames = { dashboard:"Tableau de bord", planning:"Planning des interventions", chantiers:"Suivi des chantiers", clients:"Clients & Devis", facturation:"Facturation", equipe:"Équipe & Personnel" };
+let currentPage = "dashboard";
+function showPage(id, el) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("page-"+id).classList.add("active");
+  if(el) el.classList.add("active");
+  document.getElementById("topbar-title").textContent = pageNames[id] || "";
+  currentPage = id;
+}
+
+// ── MODALS ─────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+function closeModalClick(e, id) { if(e.target === document.getElementById(id)) closeModal(id); }
+function saveAndClose(id, msg) { closeModal(id); showToast(msg); }
+
+// ── TOAST ──────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  document.getElementById("toast-msg").textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// ── DEVIS BUILDER ──────────────────────────────────────
+let lineCount = 1;
+function addLine() {
+  lineCount++;
+  const id = "line-" + lineCount;
+  const div = document.createElement("div");
+  div.className = "devis-line";
+  div.id = id;
+  div.innerHTML = `
+    <input type="text" placeholder="Description de la prestation" oninput="calcLine('${id}')">
+    <input type="number" value="1" min="1" oninput="calcLine('${id}')">
+    <input type="number" placeholder="0" oninput="calcLine('${id}')">
+    <input type="text" id="${id}-total" placeholder="0" readonly style="background:var(--cream);font-weight:600;color:var(--brown)">
+    <button onclick="removeLine('${id}')" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px;padding:4px">×</button>
+  `;
+  document.getElementById("devis-lines").appendChild(div);
+}
+function removeLine(id) {
+  const el = document.getElementById(id);
+  if(el) el.remove();
+  calcTotal();
+}
+function calcLine(id) {
+  const div = document.getElementById(id);
+  if(!div) return;
+  const inputs = div.querySelectorAll("input");
+  const qty = parseFloat(inputs[1].value) || 0;
+  const pu  = parseFloat(inputs[2].value) || 0;
+  const tot = qty * pu;
+  document.getElementById(id+"-total").value = tot > 0 ? tot.toLocaleString("fr-FR") : "0";
+  calcTotal();
+}
+function calcTotal() {
+  let ht = 0;
+  document.querySelectorAll(".devis-line").forEach(line => {
+    const inp = line.querySelectorAll("input");
+    const qty = parseFloat(inp[1].value) || 0;
+    const pu  = parseFloat(inp[2].value) || 0;
+    ht += qty * pu;
+  });
+  const remisePct = parseFloat(document.getElementById("devis-remise").value) || 0;
+  const tvaPct    = parseFloat(document.getElementById("devis-tva").value) || 0;
+  const remise    = ht * remisePct / 100;
+  const htNet     = ht - remise;
+  const tva       = htNet * tvaPct / 100;
+  const ttc       = htNet + tva;
+  document.getElementById("dt-ht").textContent     = ht.toLocaleString("fr-FR");
+  document.getElementById("dt-remise").textContent  = remise.toLocaleString("fr-FR");
+  document.getElementById("dt-tva").textContent     = tva.toLocaleString("fr-FR");
+  document.getElementById("dt-ttc").textContent     = ttc.toLocaleString("fr-FR") + " XOF";
+}
+
+// ── CHARTS ─────────────────────────────────────────────
+Chart.defaults.font.family = "Inter";
+Chart.defaults.color = "#8A7360";
+
+const caChart = new Chart(document.getElementById("chartCA"), {
+  type: "bar",
+  data: {
+    labels: ["Oct","Nov","Déc","Jan","Fév"],
+    datasets: [{
+      label: "CA (XOF)",
+      data: [672000, 804000, 588000, 852000, 1104000],
+      backgroundColor: ["#734C1FCC","#734C1FCC","#734C1FCC","#734C1FCC","#DDB11F"],
+      borderRadius: 7, borderSkipped: false
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins: { legend:{display:false}, tooltip:{ callbacks:{ label: c => c.raw.toLocaleString("fr-FR")+" XOF" } } },
+    scales: {
+      x: { grid:{display:false}, border:{display:false} },
+      y: { grid:{color:"#E3D6C3"}, border:{display:false}, ticks:{ callback: v => (v/1000)+"k" } }
+    }
+  }
+});
+
+const typeChart = new Chart(document.getElementById("chartTypes"), {
+  type: "doughnut",
+  data: {
+    labels: ["Bureaux","Fin chantier","Appartement","Sols & Murs"],
+    datasets: [{
+      data:[35,30,20,15],
+      backgroundColor:["#734C1F","#DDB11F","#B88A4A","#E3D6C3"],
+      borderWidth:0, hoverOffset:6
+    }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false, cutout:"66%",
+    plugins: { legend:{ position:"right", labels:{ padding:14, usePointStyle:true, pointStyle:"circle", font:{size:12} } } }
+  }
+});
+
+const pipelineChart = new Chart(document.getElementById("chartPipeline"), {
+  type: "bar",
+  data: {
+    labels:["Prospects","Devis envoyés","Acceptés"],
+    datasets:[{
+      data:[4,3,2],
+      backgroundColor:["#734C1F99","#DDB11FCC","#3D7A5499"],
+      borderRadius:6, borderSkipped:false
+    }]
+  },
+  options: {
+    indexAxis:"y", responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false} },
+    scales: {
+      x:{ grid:{color:"#E3D6C3"}, border:{display:false}, ticks:{precision:0} },
+      y:{ grid:{display:false}, border:{display:false} }
+    }
+  }
+});
+
+// ── SEARCH ENGINE ──────────────────────────────────────
+const SEARCH_DATA = [
+  // Clients
+  { cat:"Clients", page:"clients", title:"Société Techpro", sub:"Entreprise · M. Dupont · 8 interventions", badge:'<span class="badge bs">Actif</span>', icon:"#734C1F", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' },
+  { cat:"Clients", page:"clients", title:"Immeuble Horizon", sub:"Copropriété · Mme Martin · 3 interventions", badge:'<span class="badge bs">Actif</span>', icon:"#734C1F", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' },
+  { cat:"Clients", page:"clients", title:"Cabinet Médical Santé+", sub:"Professionnel · Dr. Bernard · 12 interventions", badge:'<span class="badge bs">Actif</span>', icon:"#734C1F", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' },
+  { cat:"Clients", page:"clients", title:"Résidence Lumière", sub:"Particulier · M. Lefevre · 2 interventions", badge:'<span class="badge bs">Actif</span>', icon:"#734C1F", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' },
+  { cat:"Clients", page:"clients", title:"École Riviera", sub:"Institution · Mme Petit · 1 intervention", badge:'<span class="badge bw">Nouveau</span>', icon:"#734C1F", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' },
+  { cat:"Clients", page:"clients", title:"Pharmacie Centrale", sub:"Professionnel · Devis en attente", badge:'<span class="badge bw">Prospect</span>', icon:"#734C1F", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' },
+  // Chantiers
+  { cat:"Chantiers", page:"chantiers", title:"#CH-025 — Résidence Lumière", sub:"Appartement meublé · 19/02/2025 · 34 800 XOF", badge:'<span class="badge bw">En cours</span>', icon:"#B88A4A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>' },
+  { cat:"Chantiers", page:"chantiers", title:"#CH-024 — Cabinet Santé+", sub:"Locaux professionnels · 20/02/2025 · 55 200 XOF", badge:'<span class="badge bi">Planifié</span>', icon:"#B88A4A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>' },
+  { cat:"Chantiers", page:"chantiers", title:"#CH-023 — École Riviera", sub:"Fin de chantier · 21/02/2025 · 144 000 XOF", badge:'<span class="badge bi">Planifié</span>', icon:"#B88A4A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>' },
+  { cat:"Chantiers", page:"chantiers", title:"#CH-022 — Immeuble Horizon", sub:"Fin de chantier · 18/02/2025 · 186 000 XOF", badge:'<span class="badge bs">Terminé</span>', icon:"#B88A4A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>' },
+  { cat:"Chantiers", page:"chantiers", title:"#CH-021 — Société Techpro", sub:"Bureaux · 17/02/2025 · 45 600 XOF", badge:'<span class="badge bs">Terminé</span>', icon:"#B88A4A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>' },
+  // Factures
+  { cat:"Factures", page:"facturation", title:"#2025-019 — Immeuble Horizon", sub:"186 000 XOF · Échéance 20/03/2025", badge:'<span class="badge bw">En attente</span>', icon:"#3D7A54", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>' },
+  { cat:"Factures", page:"facturation", title:"#2025-018 — Société Techpro", sub:"45 600 XOF · Échéance 19/03/2025", badge:'<span class="badge bw">En attente</span>', icon:"#3D7A54", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>' },
+  { cat:"Factures", page:"facturation", title:"#2025-014 — Hôtel Bellevue", sub:"158 400 XOF · IMPAYÉE depuis 20/02/2025", badge:'<span class="badge bd">Impayée</span>', icon:"#963028", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>' },
+  { cat:"Factures", page:"facturation", title:"#2025-013 — Pharmacie Centrale", sub:"33 600 XOF · IMPAYÉE depuis 18/02/2025", badge:'<span class="badge bd">Impayée</span>', icon:"#963028", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>' },
+  // Devis
+  { cat:"Devis", page:"clients", title:"#D-031 — Pharmacie Centrale", sub:"28 800 XOF · Devis en attente de validation", badge:'<span class="badge bw">En attente</span>', icon:"#DDB11F", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#1A120A" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/></svg>' },
+  { cat:"Devis", page:"clients", title:"#D-030 — Complexe sportif Nord", sub:"111 000 XOF · Envoyé au client", badge:'<span class="badge bi">Envoyé</span>', icon:"#DDB11F", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#1A120A" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/></svg>' },
+  { cat:"Devis", page:"clients", title:"#D-029 — Résidence Les Pins", sub:"19 200 XOF · Devis accepté", badge:'<span class="badge bs">Accepté</span>', icon:"#DDB11F", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#1A120A" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/></svg>' },
+  // Équipe
+  { cat:"Équipe", page:"equipe", title:"Kofi Diallo", sub:"Chef d'équipe A · Présent · 2 interventions", badge:'<span class="badge bs">Présent</span>', icon:"#1F5C8A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  { cat:"Équipe", page:"equipe", title:"Aminata Mbaye", sub:"Agent · Équipe A · Présente", badge:'<span class="badge bs">Présent</span>', icon:"#1F5C8A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  { cat:"Équipe", page:"equipe", title:"Sidi Coulibaly", sub:"Chef d'équipe B · En intervention — École Riviera", badge:'<span class="badge bw">En intervention</span>', icon:"#1F5C8A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  { cat:"Équipe", page:"equipe", title:"Moussa Sarr", sub:"Agent · Équipe C · Congé maladie", badge:'<span class="badge bd">Absent</span>', icon:"#963028", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  { cat:"Équipe", page:"equipe", title:"Ndeye Kouyaté", sub:"Agent · Équipe B · Congé payé", badge:'<span class="badge bd">Absent</span>', icon:"#963028", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  { cat:"Équipe", page:"equipe", title:"Fatou Traoré", sub:"Agent · Équipe B · En intervention — École Riviera", badge:'<span class="badge bw">En intervention</span>', icon:"#1F5C8A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  { cat:"Équipe", page:"equipe", title:"Mariama Ly", sub:"Chef d'équipe C · 1 intervention prévue", badge:'<span class="badge bs">Présent</span>', icon:"#1F5C8A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  { cat:"Équipe", page:"equipe", title:"Ibrahim Ba", sub:"Agent · Équipe B · Disponible", badge:'<span class="badge bs">Présent</span>', icon:"#1F5C8A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  { cat:"Équipe", page:"equipe", title:"Awa Baldé", sub:"Agent · Équipe A · Disponible", badge:'<span class="badge bs">Présent</span>', icon:"#1F5C8A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  { cat:"Équipe", page:"equipe", title:"Ousmane Diouf", sub:"Agent · Équipe C · Disponible", badge:'<span class="badge bs">Présent</span>', icon:"#1F5C8A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>' },
+  // Planning
+  { cat:"Planning", page:"planning", title:"Pharmacie Centrale — Sols et murs", sub:"25/02/2025 · 06h00–10h00 · Équipe A (2 agents)", badge:'<span class="badge bi">Planifié</span>', icon:"#C07A1A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' },
+  { cat:"Planning", page:"planning", title:"Résidence Lumière — Appartement meublé", sub:"19/02/2025 · 08h00–12h00 · Équipe A (2 agents)", badge:'<span class="badge bw">En cours</span>', icon:"#C07A1A", ico_svg:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>' },
+];
+
+let focusedIndex = -1;
+
+// Normalise : retire accents, tirets, apostrophes, points, espaces multiples
+function norm(str) {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")   // accents
+    .replace(/['\u2019\u2018`]/g, "")  // apostrophes
+    .replace(/[-–—_]/g, " ")           // tirets → espace
+    .replace(/[.,;:!?#]/g, "")         // ponctuation
+    .replace(/\s+/g, " ")              // espaces multiples
+    .trim();
+}
+
+function highlight(text, query) {
+  if (!query) return text;
+  // Build a regex that matches with/without accents character by character
+  const normQ = norm(query);
+  // Simple approach: highlight original text where norm matches
+  // We'll do a word-by-word highlight on normalized content
+  const escaped = normQ.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp("(" + escaped.split(" ").filter(Boolean).join("|") + ")", "gi");
+  // Highlight on original by matching normalized positions
+  let result = text;
+  normQ.split(" ").filter(Boolean).forEach(word => {
+    const wr = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), "gi");
+    result = result.replace(wr, m => `<mark>${m}</mark>`);
+  });
+  return result;
+}
+
+function handleSearch(q) {
+  const clear = document.getElementById("search-clear");
+  clear.style.display = q.length > 0 ? "block" : "none";
+  focusedIndex = -1;
+  if (!q.trim()) { renderSearchDefault(); return; }
+  const nq = norm(q);
+  const terms = nq.split(" ").filter(Boolean);
+  const results = SEARCH_DATA.filter(d => {
+    const haystack = norm(d.title + " " + d.sub + " " + d.cat);
+    return terms.every(t => haystack.includes(t));
+  });
+  renderResults(results, q);
+}
+
+function renderSearchDefault() {
+  const panel = document.getElementById("search-panel");
+  const res   = document.getElementById("search-results");
+  const empty = document.getElementById("search-empty");
+  // Show quick links when empty
+  empty.style.display = "none";
+  res.innerHTML = `
+    <div style="padding:10px 16px 6px;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;background:var(--bg)">Accès rapide</div>
+    ${[
+      {label:"Tableau de bord", page:"dashboard", color:"#734C1F"},
+      {label:"Planning du jour", page:"planning", color:"#C07A1A"},
+      {label:"Chantiers actifs", page:"chantiers", color:"#B88A4A"},
+      {label:"Clients & Devis", page:"clients", color:"#DDB11F"},
+      {label:"Facturation", page:"facturation", color:"#3D7A54"},
+      {label:"Équipe & Personnel", page:"equipe", color:"#1F5C8A"},
+    ].map(item => `
+      <div class="sr-item" onclick="goToPage('${item.page}')">
+        <div class="sr-icon" style="background:${item.color}20">
+          <svg viewBox="0 0 24 24" fill="none" stroke="${item.color}" stroke-width="2" width="15" height="15"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div><div class="sr-title">${item.label}</div></div>
+      </div>
+    `).join("")}
+  `;
+}
+
+function renderResults(results, q) {
+  const res   = document.getElementById("search-results");
+  const empty = document.getElementById("search-empty");
+  if (results.length === 0) {
+    res.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  // Group by category
+  const grouped = {};
+  results.forEach(r => { if(!grouped[r.cat]) grouped[r.cat]=[]; grouped[r.cat].push(r); });
+  let html = "";
+  Object.keys(grouped).forEach(cat => {
+    html += `<div class="sr-cat">${cat} <span style="color:var(--border)">(${grouped[cat].length})</span></div>`;
+    grouped[cat].forEach((item, i) => {
+      html += `
+        <div class="sr-item" data-page="${item.page}" onclick="goToPage('${item.page}')">
+          <div class="sr-icon" style="background:${item.icon}22">${item.ico_svg.replace('stroke="#fff"', `stroke="${item.icon}"`)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="sr-title">${highlight(item.title, q)}</div>
+            <div class="sr-sub">${highlight(item.sub, q)}</div>
+          </div>
+          <div class="sr-badge">${item.badge}</div>
+        </div>`;
+    });
+  });
+  res.innerHTML = html;
+}
+
+function goToPage(pageId) {
+  hideSearchPanel();
+  clearSearch();
+  const navEl = document.querySelector(`[onclick*="showPage('${pageId}'"]`) ||
+                document.querySelector(`[onclick*='showPage("${pageId}"']`);
+  showPage(pageId, navEl);
+}
+
+function showSearchPanel() {
+  const panel = document.getElementById("search-panel");
+  panel.style.display = "block";
+  const q = document.getElementById("search-input").value;
+  if (!q.trim()) renderSearchDefault();
+}
+
+function hideSearchPanel() {
+  document.getElementById("search-panel").style.display = "none";
+  focusedIndex = -1;
+}
+
+function clearSearch() {
+  document.getElementById("search-input").value = "";
+  document.getElementById("search-clear").style.display = "none";
+  renderSearchDefault();
+  document.getElementById("search-input").focus();
+}
+
+function searchKeyNav(e) {
+  const items = document.querySelectorAll(".sr-item");
+  if (e.key === "Escape") { hideSearchPanel(); document.getElementById("search-input").blur(); return; }
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    focusedIndex = Math.min(focusedIndex + 1, items.length - 1);
+    items.forEach((el,i) => el.classList.toggle("focused", i === focusedIndex));
+    if(items[focusedIndex]) items[focusedIndex].scrollIntoView({block:"nearest"});
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    focusedIndex = Math.max(focusedIndex - 1, 0);
+    items.forEach((el,i) => el.classList.toggle("focused", i === focusedIndex));
+  } else if (e.key === "Enter" && focusedIndex >= 0) {
+    items[focusedIndex].click();
+  }
+}
+
+// Close panel on outside click
+document.addEventListener("click", e => {
+  const wrap = document.getElementById("search-box-wrap");
+  const panel = document.getElementById("search-panel");
+  if (!wrap.contains(e.target) && !panel.contains(e.target)) hideSearchPanel();
+});
+
+function updateChartsTheme() {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const gridColor = isDark ? "#2E200F" : "#E3D6C3";
+  const textColor = isDark ? "#8A7360" : "#8A7360";
+  [caChart, pipelineChart].forEach(ch => {
+    ch.options.scales.x.grid.color = gridColor;
+    ch.options.scales.y.grid.color = gridColor;
+    ch.update();
+  });
+}
+</script>
+</body>
+</html>
